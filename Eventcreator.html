@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dokkan Battle Event Editor</title>
+    <link rel="stylesheet" href="style/style.css" />
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Dokkan Eclipse's Event Editor</h1>
+            <p>Create and modify your battle events easily</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="section">
+                <h2 class="section-title">⚔️ Battle Phases</h2>
+                <div id="phasesContainer" class="phases-container">
+                    <!-- Phases are generated here-->
+                </div>
+                <button class="add-phase-btn" onclick="addPhase()">
+                    ➕ Add Phase
+                </button>
+            </div>
+            
+            <div class="export-section">
+                <h2 class="section-title">📤 JSON Export</h2>
+                <div class="export-controls">
+                    <button class="btn btn-primary" onclick="updateJSON()">🔄 Update JSON</button>
+                    <button class="btn btn-success" onclick="copyJSON()">📋 Copy JSON</button>
+                    <button class="btn btn-warning" onclick="loadFromJSON()">📥 Load JSON</button>
+                </div>
+                <div id="jsonOutput" class="json-output"></div>
+            </div>
+        </div>
+    </div>
+  <script src="script.js"></script>
+
+</body>
+</html>
