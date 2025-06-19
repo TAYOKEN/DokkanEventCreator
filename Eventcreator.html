@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dokkan Battle Event Editor</title>
     <link rel="stylesheet" href="style/style.css" />
-      <link rel="shortcut icon" href="images/favicon.ico" />
+    <link rel="shortcut icon" href="images/favicon.ico" />
 </head>
 <body>
     <div class="container">
@@ -36,7 +36,41 @@
             </div>
         </div>
     </div>
-  <script src="script/script.js"></script>
 
+    <!-- Modal pour sélection des skills -->
+    <div id="skillModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🗡️ Select Enemy Skills</h2>
+                <span class="close" onclick="closeSkillModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="search-container">
+                    <input type="text" id="skillSearch" placeholder="Search skills by name, description or ID..." 
+                           onkeyup="searchSkills()" class="search-input">
+                    <button class="btn btn-primary" onclick="searchSkills()">🔍 Search</button>
+                </div>
+                
+                <div class="selected-skills">
+                    <h3>Selected Skills:</h3>
+                    <div id="selectedSkillsList"></div>
+                </div>
+                
+                <div class="skills-list" id="skillsList">
+                    <!-- Skills will be loaded here -->
+                </div>
+                
+                <div class="pagination" id="skillsPagination">
+                    <!-- Pagination controls -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" onclick="confirmSkillSelection()">✅ Confirm Selection</button>
+                <button class="btn btn-secondary" onclick="closeSkillModal()">❌ Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script/script.js"></script>
 </body>
 </html>
