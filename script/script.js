@@ -1,5 +1,5 @@
-        // Données initiales basées sur le fichier fourni
-        let eventData = {
+       // maybe change the reference idkkkk
+       let eventData = {
             "dice": {
                 "nums": [
                     {"num": 1, "weight": 0},
@@ -207,7 +207,7 @@
             const battleInfo = eventData.events["3"].content.battle_info;
             const enemies = eventData.events["3"].content.enemies;
             
-            // Ajouter une nouvelle phase avec les valeurs par défaut
+            // Add a new battle info
             battleInfo.push({
                 "after_script_id": null,
                 "background_id": 168,
@@ -218,7 +218,7 @@
                 "round_id": 78500011
             });
             
-            // Ajouter un ennemi par défaut
+            // New phase = new enemy either way kaboom
             enemies.push([{
                 "ai_type": 64,
                 "attack": 420000,
@@ -272,7 +272,7 @@
         }
 
         function removeEnemy(phaseIndex, enemyIndex) {
-            if (confirm('Are you sure you want to delete this enemy?')) {
+            if (confirm('Are you sure you want to delete this enemy?')) { // Are you sure ?
                 eventData.events["3"].content.enemies[phaseIndex].splice(enemyIndex, 1);
                 renderPhases();
             }
@@ -305,7 +305,7 @@
                 alert('JSON copied to clipboard!');
             });
         }
-
+        // Change ts into smth that import from a file loloololol
         function loadFromJSON() {
             const jsonString = prompt('Paste your JSON here:');
             if (jsonString) {
@@ -320,5 +320,4 @@
             }
         }
 
-        // Initialisation au chargement de la page
         window.onload = initializeEditor;
