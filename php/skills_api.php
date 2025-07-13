@@ -41,7 +41,7 @@ function searchSkills() {
         $params = [];
         
         if (!empty($search)) {
-            $sql .= " AND (name ILIKE :search OR description ILIKE :search OR id ILIKE :search)";
+            $sql .= " AND (name LIKE :search OR description LIKE :search OR id LIKE :search)";
             $params['search'] = '%' . $search . '%';
         }
         
@@ -58,7 +58,7 @@ function searchSkills() {
         $countParams = [];
         
         if (!empty($search)) {
-            $countSql .= " AND (name ILIKE :search OR description ILIKE :search OR id ILIKE :search)";
+            $countSql .= " AND (name LIKE :search OR description LIKE :search OR id LIKE :search)";
             $countParams['search'] = '%' . $search . '%';
         }
         

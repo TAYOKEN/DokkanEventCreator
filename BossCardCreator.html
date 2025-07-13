@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boss Card Creator - Dokkan Eclipse</title>
+    <link rel="stylesheet" href="style/style2.css" />
+        <link rel="shortcut icon" href="images/favicon.ico" />
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <nav class="nav-bar">
+                    <a href="index.html" class="logo-section">
+                        <div class="logo"><img src="images/favicon.svg" alt="logo" onerror="this.src='https://images.unsplash.com/photo-1549813069-f95e44d7f498?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80'" style="height: 50px; width: 50px; margin: 50px;"></div>
+                        <div class="logo-text">
+                            <h1 class="logo-title">Dokkan Eclipse</h1>
+                            <p class="logo-subtitle">Event Editor Website</p>
+                        </div>
+                    </a>
+                    <div class="nav-menu">
+                        <a href="Patcheseventcreator.html" class="nav-btn primary">
+                            🔧 SQL Maker
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="section">
+                <h2 class="section-title">Boss Card Creator</h2>
+                
+                <!-- Card Selection -->
+                <div class="form-group">
+                    <label>Search Base Card</label>
+                    <div class="card-search-container">
+                        <input type="text" class="card-search-input" id="cardSearch" placeholder="Search for a card by name or ID...">
+                        <div class="card-results" id="cardResults"></div>
+                    </div>
+                </div>
+
+                <div class="selected-card" id="selectedCard">
+                    <div class="selected-card-content">
+                        <img id="selectedCardImage" src="" alt="Selected Card">
+                        <div>
+                            <div class="card-name" id="selectedCardName"></div>
+                            <div class="card-id" id="selectedCardId"></div>
+                            <span class="type-badge" id="selectedCardType"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Boss Card ID Configuration -->
+                <div class="form-group">
+                    <label>Boss Card ID (5 digits)</label>
+                    <div class="id-input-group">
+                        <input type="text" class="id-input" id="bossCardId" placeholder="Enter 5 digits (e.g., 78945)" maxlength="5">
+                        <div class="id-suffix" id="idSuffix">000/001</div>
+                    </div>
+                    <small style="color: #6c757d; margin-top: 5px; display: block;">
+                        The system will generate two versions: one ending with 000 and another with 001
+                    </small>
+                </div>
+            </div>
+
+            <!-- Special Set Configuration -->
+            <div class="section">
+                <h2 class="section-title">Special Attack Configuration</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Special Name</label>
+                        <input type="text" id="specialName" placeholder="e.g., Kaioken Assault">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="specialDescription" rows="3" placeholder="Describe the special attack effect" style="padding: 12px 15px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 1em; resize: vertical;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Damage Multiplier (%)</label>
+                        <input type="number" id="increaseRate" placeholder="e.g., 200" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Level Bonus</label>
+                        <input type="number" id="lvBonus" placeholder="e.g., 5" min="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Special Effects -->
+            <div class="section">
+                <h2 class="section-title">Special Effects</h2>
+                <div class="special-effects-container" id="specialEffectsContainer">
+                    <div class="special-effect-item">
+                        <button type="button" class="remove-effect-btn" onclick="removeEffect(this)">×</button>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Effect Type</label>
+                                <select class="effect-type">
+                                    <option value="Special::NormalEfficacySpecial">Normal Efficacy Special</option>
+                                    <option value="Special::BuffEfficacySpecial">Buff Efficacy Special</option>
+                                    <option value="Special::DebuffEfficacySpecial">Debuff Efficacy Special</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Efficacy Type</label>
+                                <input type="number" class="efficacy-type" placeholder="e.g., 3" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Target Type</label>
+                                <input type="number" class="target-type" placeholder="e.g., 1" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Calculation Option</label>
+                                <input type="number" class="calc-option" placeholder="e.g., 2" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Turn Duration</label>
+                                <input type="number" class="turn" placeholder="e.g., 99" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Probability (%)</label>
+                                <input type="number" class="prob" placeholder="e.g., 100" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label>Effect Value 1</label>
+                                <input type="number" class="eff-value1" placeholder="e.g., 25" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Effect Value 2</label>
+                                <input type="number" class="eff-value2" placeholder="e.g., 25" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Effect Value 3</label>
+                                <input type="number" class="eff-value3" placeholder="e.g., 0" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-success" onclick="addSpecialEffect()">+ Add Special Effect</button>
+            </div>
+
+
+            <!-- Categories Selection -->
+            <div class="section">
+<div class="search-container">
+    <label for="categorySearch">Search Categories</label>
+    <input type="text" id="categorySearch" placeholder="Type to search categories..." style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 15px;">
+</div>
+                <h2 class="section-title">Card Categories</h2>
+                <div class="categories-grid" id="categoriesGrid">
+                    <!-- Categories will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Generate Button -->
+            <button type="button" class="generate-btn" onclick="generateSQL()">Generate SQL</button>
+
+            <!-- SQL Output -->
+            <div class="sql-output" id="sqlOutput">
+                <button class="copy-btn" onclick="copySQL()">Copy</button>
+                <div id="sqlContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="footer-content">
+            <p class="footer-subtitle">Made by TAYOKEN A.K.A Yanis</p>
+        </div>
+    </div>
+
+    <script src="script/script3.js"></script>
+</body>
+</html>

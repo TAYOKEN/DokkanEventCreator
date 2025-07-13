@@ -8,6 +8,14 @@ let currentPage = 0;
 let totalSkills = 0;
 const SKILLS_PER_PAGE = 20;
 
+//same but 4 cards
+const CARDS_API_URL = 'php/cards_api.php';
+let availableCards = [];
+let currentCardContext = null;
+let currentCardPage = 0;
+let totalCards = 0;
+const CARDS_PER_PAGE = 20;
+
 // maybe change the reference idkkkk
 let eventData = {
     "dice": {
@@ -168,11 +176,6 @@ function createEnemyCard(enemy, phaseIndex, enemyIndex) {
                            onchange="updateEnemy(${phaseIndex}, ${enemyIndex}, 'hp', parseInt(this.value))">
                 </div>
                 <div class="form-group">
-                    <label>Card ID:</label>
-                    <input type="number" value="${enemy.card_id}" 
-                           onchange="updateEnemy(${phaseIndex}, ${enemyIndex}, 'card_id', parseInt(this.value))">
-                </div>
-                <div class="form-group">
                     <label>Multi Attack:</label>
                     <input type="number" value="${enemy.multi_atk_num}" 
                            onchange="updateEnemy(${phaseIndex}, ${enemyIndex}, 'multi_atk_num', parseInt(this.value))">
@@ -186,6 +189,28 @@ function createEnemyCard(enemy, phaseIndex, enemyIndex) {
                     <label>First Turn:</label>
                     <input type="number" value="${enemy.first_turn}" 
                            onchange="updateEnemy(${phaseIndex}, ${enemyIndex}, 'first_turn', parseInt(this.value))">
+                </div>
+            </div>
+            
+            <div class="card-container">
+                <div class="form-group">
+                    <label>Card:</label>
+                    <div class="card-selector">
+                        <button class="btn btn-primary" onclick="openCardModal(${phaseIndex}, ${enemyIndex})">
+                            👤 Select from Database
+                        </button>
+                        <button class="btn btn-secondary" onclick="toggleManualCardInput(${phaseIndex}, ${enemyIndex})">
+                            ✏️ Manual Input
+                        </button>
+                    </div>
+                    <div class="card-display" id="card-display-${phaseIndex}-${enemyIndex}">
+                        ${renderCardDisplay(enemy.card_id)}
+                    </div>
+                    <div class="card-manual-input" id="card-manual-input-${phaseIndex}-${enemyIndex}">
+                        <input type="number" value="${enemy.card_id}" 
+                               onchange="updateEnemyCardManual(${phaseIndex}, ${enemyIndex}, this.value)"
+                               placeholder="Enter card ID">
+                    </div>
                 </div>
             </div>
             
@@ -346,11 +371,9 @@ function toggleManualSkillInput(phaseIndex, enemyIndex) {
     }
 }
 
-// Skill Modal Functions
 function openSkillModal(phaseIndex, enemyIndex) {
     currentSkillContext = { phaseIndex, enemyIndex };
     
-    // Get current skills for this enemy
     const currentSkills = eventData.events["3"].content.enemies[phaseIndex][enemyIndex].enemy_skill_ids || [];
     selectedSkills = [...currentSkills];
     
@@ -563,10 +586,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    const characterSearch = document.getElementById('characterSearch');
+    if (characterSearch) {
+        characterSearch.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchCharacters();
+            }
+        });
+    }
+    
     window.addEventListener('click', function(event) {
-        const modal = document.getElementById('skillModal');
-        if (event.target === modal) {
+        const skillModal = document.getElementById('skillModal');
+        const characterModal = document.getElementById('characterModal');
+        
+        if (event.target === skillModal) {
             closeSkillModal();
+        }
+        
+        if (event.target === characterModal) {
+            closeCharacterModal();
         }
     });
 });
@@ -599,3 +637,441 @@ function loadFromJSON() {
 }
 
 window.onload = initializeEditor;
+
+function openCardModal(phaseIndex, enemyIndex) {
+    currentCardContext = { phaseIndex, enemyIndex };
+    
+    const modal = document.getElementById('characterModal');
+    modal.style.display = 'block';
+    
+    loadCards();
+}
+
+// Fonction pour fermer le modal des cartes
+function closeCharacterModal() {
+    const modal = document.getElementById('characterModal');
+    modal.style.display = 'none';
+    currentCardContext = null;
+    availableCards = [];
+    currentCardPage = 0;
+}
+
+// Fonction pour charger les cartes depuis l'API
+async function loadCards(search = '') {
+    try {
+        const params = new URLSearchParams({
+            action: 'search',
+            search: search,
+            limit: CARDS_PER_PAGE,
+            offset: currentCardPage * CARDS_PER_PAGE
+        });
+        
+        const response = await fetch(`${CARDS_API_URL}?${params}`);
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        availableCards = data.cards || [];
+        totalCards = data.total || 0;
+        
+        renderCardsList();
+        renderCardsPagination();
+        
+    } catch (error) {
+        console.error('Error loading cards:', error);
+        const cardsList = document.getElementById('charactersList');
+        cardsList.innerHTML = `<div class="loading">Error loading cards: ${error.message}</div>`;
+    }
+}
+
+// Fonction pour afficher la liste des cartes
+function renderCardsList() {
+    const cardsList = document.getElementById('charactersList');
+    
+    if (availableCards.length === 0) {
+        cardsList.innerHTML = '<div class="loading">No cards found</div>';
+        return;
+    }
+    
+    cardsList.innerHTML = availableCards.map(card => {
+        const imageUrl = `https://dokkanbattle.net/assets/character/card/${card.id}/card_${card.id}_circle.png`;
+        const rarityStars = '★'.repeat(Math.min(card.rarity || 0, 7));
+        
+        return `
+            <div class="character-card" onclick="selectCard('${card.id}', '${card.name}')">
+                <img src="${imageUrl}" 
+                     alt="${card.name}" 
+                     class="character-image"
+                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjZjhmOWZhIi8+Cjx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjNmM3NTdkIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5ObyBJbWFnZTwvdGV4dD4KPC9zdmc+'">
+                <div class="character-info">
+                    <div class="character-name">${card.name || 'Unknown Card'}</div>
+                    <div class="character-id">ID: ${card.id}</div>
+                    <div class="character-rarity">${rarityStars}</div>
+                    <div class="character-cost">Cost: ${card.cost || 0}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Fonction pour sélectionner une carte
+function selectCard(cardId, cardName) {
+    if (!currentCardContext) return;
+    
+    const { phaseIndex, enemyIndex } = currentCardContext;
+    
+    eventData.events["3"].content.enemies[phaseIndex][enemyIndex].card_id = parseInt(cardId);
+    
+    const cardInput = document.querySelector(`input[onchange*="updateEnemy(${phaseIndex}, ${enemyIndex}, 'card_id'"]`);
+    if (cardInput) {
+        cardInput.value = cardId;
+    }
+    
+    closeCharacterModal();
+    
+    console.log(`Card selected: ${cardName} (ID: ${cardId})`);
+}
+
+function searchCharacters() {
+    currentCardPage = 0;
+    const searchTerm = document.getElementById('characterSearch').value;
+    loadCards(searchTerm);
+}
+
+function changeCardPage(newPage) {
+    const totalPages = Math.ceil(totalCards / CARDS_PER_PAGE);
+    if (newPage >= 0 && newPage < totalPages && newPage !== currentCardPage) {
+        currentCardPage = newPage;
+        loadCards(document.getElementById('characterSearch').value);
+    }
+}
+
+function renderCardsPagination() {
+    const totalPages = Math.ceil(totalCards / CARDS_PER_PAGE);
+    const pagination = document.getElementById('charactersPagination');
+    
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
+    
+    let paginationHTML = '';
+    
+    paginationHTML += `
+        <button onclick="changeCardPage(${currentCardPage - 1})" ${currentCardPage === 0 ? 'disabled' : ''}>
+            ← Previous
+        </button>
+    `;
+    
+    const startPage = Math.max(0, currentCardPage - 2);
+    const endPage = Math.min(totalPages - 1, currentCardPage + 2);
+    
+    if (startPage > 0) {
+        paginationHTML += `<button onclick="changeCardPage(0)">1</button>`;
+        if (startPage > 1) {
+            paginationHTML += `<span>...</span>`;
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHTML += `
+            <button onclick="changeCardPage(${i})" ${i === currentCardPage ? 'class="active"' : ''}>
+                ${i + 1}
+            </button>
+        `;
+    }
+    
+    if (endPage < totalPages - 1) {
+        if (endPage < totalPages - 2) {
+            paginationHTML += `<span>...</span>`;
+        }
+        paginationHTML += `<button onclick="changeCardPage(${totalPages - 1})">${totalPages}</button>`;
+    }
+    
+    paginationHTML += `
+        <button onclick="changeCardPage(${currentCardPage + 1})" ${currentCardPage === totalPages - 1 ? 'disabled' : ''}>
+            Next →
+        </button>
+    `;
+    
+    pagination.innerHTML = paginationHTML;
+}
+
+function renderCardDisplay(cardId) {
+    if (!cardId) {
+        return '<span style="color: #6c757d; font-style: italic;">No card selected</span>';
+    }
+    
+    const imageUrl = `https://dokkanbattle.net/assets/character/card/${cardId}/card_${cardId}_circle.png`;
+    
+    return `
+        <div class="card-info-display">
+            <img src="${imageUrl}" 
+                 alt="Card ${cardId}" 
+                 class="card-preview-image"
+                 onerror="this.style.display='none'">
+            <div class="card-details">
+                <div class="card-id-display">ID: ${cardId}</div>
+                <div class="card-name">Loading card info...</div>
+            </div>
+        </div>
+    `;
+}
+
+function toggleManualCardInput(phaseIndex, enemyIndex) {
+    const manualInput = document.getElementById(`card-manual-input-${phaseIndex}-${enemyIndex}`);
+    const cardDisplay = document.getElementById(`card-display-${phaseIndex}-${enemyIndex}`);
+    
+    if (manualInput.style.display === 'none' || manualInput.style.display === '') {
+        manualInput.style.display = 'block';
+        cardDisplay.style.display = 'none';
+    } else {
+        manualInput.style.display = 'none';
+        cardDisplay.style.display = 'block';
+    }
+}
+
+function updateEnemyCardManual(phaseIndex, enemyIndex, cardId) {
+    const id = parseInt(cardId);
+    if (isNaN(id)) return;
+    
+    eventData.events["3"].content.enemies[phaseIndex][enemyIndex].card_id = id;
+    
+    const displayElement = document.getElementById(`card-display-${phaseIndex}-${enemyIndex}`);
+    if (displayElement) {
+        displayElement.innerHTML = renderCardDisplay(id);
+    }
+    
+    loadCardInfo(id, phaseIndex, enemyIndex);
+}
+
+async function loadCardInfo(cardId, phaseIndex, enemyIndex) {
+    try {
+        const params = new URLSearchParams({
+            action: 'get_card',
+            id: cardId
+        });
+        
+        const response = await fetch(`${CARDS_API_URL}?${params}`);
+        const data = await response.json();
+        
+        if (data.error || !data.card) {
+            return; 
+        }
+        
+        const card = data.card;
+        const displayElement = document.getElementById(`card-display-${phaseIndex}-${enemyIndex}`);
+        if (displayElement) {
+            const imageUrl = `https://dokkanbattle.net/assets/character/card/${cardId}/card_${cardId}_circle.png`;
+            const rarityStars = '★'.repeat(Math.min(card.rarity || 0, 7));
+            
+            displayElement.innerHTML = `
+                <div class="card-info-display">
+                    <img src="${imageUrl}" 
+                         alt="${card.name}" 
+                         class="card-preview-image"
+                         onerror="this.style.display='none'">
+                    <div class="card-details">
+                        <div class="card-name">${card.name || 'Unknown Card'}</div>
+                        <div class="card-id-display">ID: ${cardId}</div>
+                        <div class="card-rarity-display">${rarityStars}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+    } catch (error) {
+        console.error('Error loading card info:', error);
+    }
+}
+
+function selectCard(cardId, cardName) {
+    if (!currentCardContext) return;
+    
+    const { phaseIndex, enemyIndex } = currentCardContext;
+    
+    eventData.events["3"].content.enemies[phaseIndex][enemyIndex].card_id = parseInt(cardId);
+    
+    const displayElement = document.getElementById(`card-display-${phaseIndex}-${enemyIndex}`);
+    if (displayElement) {
+        const imageUrl = `https://dokkanbattle.net/assets/character/card/${cardId}/card_${cardId}_circle.png`;
+        
+        displayElement.innerHTML = `
+            <div class="card-info-display">
+                <img src="${imageUrl}" 
+                     alt="${cardName}" 
+                     class="card-preview-image"
+                     onerror="this.style.display='none'">
+                <div class="card-details">
+                    <div class="card-name">${cardName}</div>
+                    <div class="card-id-display">ID: ${cardId}</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    const manualInput = document.querySelector(`#card-manual-input-${phaseIndex}-${enemyIndex} input`);
+    if (manualInput) {
+        manualInput.value = cardId;
+    }
+    
+    closeCharacterModal();
+    
+    console.log(`Card selected: ${cardName} (ID: ${cardId})`);
+}
+function renderCardDisplay(cardId) {
+    if (!cardId) {
+        return '<span style="color: #6c757d; font-style: italic;">No card selected</span>';
+    }
+    
+    const isAwakened = cardId.toString().endsWith('1');
+    const imageCardId = isAwakened ? cardId.toString().slice(0, -1) + '0' : cardId;
+    const baseImageUrl = `https://dokkanbattle.net/assets/character/card/${imageCardId}/card_${imageCardId}_circle.png`;
+    
+    return `
+        <div class="card-info-display">
+            <div class="card-image-container ${isAwakened ? 'awakened' : ''}">
+                <img src="${baseImageUrl}" 
+                     alt="Card ${cardId}" 
+                     class="card-preview-image"
+                     onerror="this.style.display='none'">
+            </div>
+            <div class="card-details">
+                <div class="card-id-display">ID: ${cardId}</div>
+                <div class="card-name">Loading card info...</div>
+            </div>
+        </div>
+    `;
+}
+
+async function loadCardInfo(cardId, phaseIndex, enemyIndex) {
+    try {
+        const params = new URLSearchParams({
+            action: 'get_card',
+            id: cardId
+        });
+        
+        const response = await fetch(`${CARDS_API_URL}?${params}`);
+        const data = await response.json();
+        
+        if (data.error || !data.card) {
+            return;
+        }
+        
+        const card = data.card;
+        const displayElement = document.getElementById(`card-display-${phaseIndex}-${enemyIndex}`);
+        if (displayElement) {
+            const isAwakened = cardId.toString().endsWith('1');
+            const imageCardId = isAwakened ? cardId.toString().slice(0, -1) + '0' : cardId;
+            const imageUrl = `https://dokkanbattle.net/assets/character/card/${imageCardId}/card_${imageCardId}_circle.png`;
+            const rarityStars = '★'.repeat(Math.min(card.rarity || 0, 7));
+            
+            displayElement.innerHTML = `
+                <div class="card-info-display">
+                    <div class="card-image-container ${isAwakened ? 'awakened' : ''}">
+                        <img src="${imageUrl}" 
+                             alt="${card.name}" 
+                             class="card-preview-image"
+                             onerror="this.style.display='none'">
+                    </div>
+                    <div class="card-details">
+                        <div class="card-name">${card.name || 'Unknown Card'}</div>
+                        <div class="card-id-display">ID: ${cardId}</div>
+                        <div class="card-rarity-display">${rarityStars}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+    } catch (error) {
+        console.error('Error loading card info:', error);
+    }
+}
+
+function selectCard(cardId, cardName) {
+    if (!currentCardContext) return;
+    
+    const { phaseIndex, enemyIndex } = currentCardContext;
+    
+    eventData.events["3"].content.enemies[phaseIndex][enemyIndex].card_id = parseInt(cardId);
+    
+    const displayElement = document.getElementById(`card-display-${phaseIndex}-${enemyIndex}`);
+    if (displayElement) {
+        const isAwakened = cardId.toString().endsWith('1');
+        const imageCardId = isAwakened ? cardId.toString().slice(0, -1) + '0' : cardId;
+        const imageUrl = `https://dokkanbattle.net/assets/character/card/${imageCardId}/card_${imageCardId}_circle.png`;
+        
+        displayElement.innerHTML = `
+            <div class="card-info-display">
+                <div class="card-image-container ${isAwakened ? 'awakened' : ''}">
+                    <img src="${imageUrl}" 
+                         alt="${cardName}" 
+                         class="card-preview-image"
+                         onerror="this.style.display='none'">
+                </div>
+                <div class="card-details">
+                    <div class="card-name">${cardName}</div>
+                    <div class="card-id-display">ID: ${cardId}</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    const manualInput = document.querySelector(`#card-manual-input-${phaseIndex}-${enemyIndex} input`);
+    if (manualInput) {
+        manualInput.value = cardId;
+    }
+    
+    closeCharacterModal();
+    
+    console.log(`Card selected: ${cardName} (ID: ${cardId})`);
+}
+
+function updateEnemyCardManual(phaseIndex, enemyIndex, cardId) {
+    const id = parseInt(cardId);
+    if (isNaN(id)) return;
+    
+    eventData.events["3"].content.enemies[phaseIndex][enemyIndex].card_id = id;
+    
+    const displayElement = document.getElementById(`card-display-${phaseIndex}-${enemyIndex}`);
+    if (displayElement) {
+        displayElement.innerHTML = renderCardDisplay(id);
+    }
+    
+    loadCardInfo(id, phaseIndex, enemyIndex);
+}
+
+function renderCardsList() {
+    const cardsList = document.getElementById('charactersList');
+    
+    if (availableCards.length === 0) {
+        cardsList.innerHTML = '<div class="loading">No cards found</div>';
+        return;
+    }
+    
+    cardsList.innerHTML = availableCards.map(card => {
+        const isAwakened = card.id.toString().endsWith('1');
+        const imageCardId = isAwakened ? card.id.toString().slice(0, -1) + '0' : card.id;
+        const imageUrl = `https://dokkanbattle.net/assets/character/card/${imageCardId}/card_${imageCardId}_circle.png`;
+        const rarityStars = '★'.repeat(Math.min(card.rarity || 0, 7));
+        
+        return `
+            <div class="character-card" onclick="selectCard('${card.id}', '${card.name}')">
+                <div class="card-image-container ${isAwakened ? 'awakened' : ''}">
+                    <img src="${imageUrl}" 
+                         alt="${card.name}" 
+                         class="character-image"
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjZjhmOWZhIi8+Cjx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjNmM3NTdkIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5ObyBJbWFnZTwvdGV4dD4KPC9zdmc+'">
+                </div>
+                <div class="character-info">
+                    <div class="character-name">${card.name || 'Unknown Card'}</div>
+                    <div class="character-id">ID: ${card.id}</div>
+                    <div class="character-rarity">${rarityStars}</div>
+                    <div class="character-cost">Cost: ${card.cost || 0}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
